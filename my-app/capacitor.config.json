@@ -1,0 +1,6 @@
+{
+  "appId": "com.soulandplanet.premium",
+  "appName": "SoulAndPlanet Premium App",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
