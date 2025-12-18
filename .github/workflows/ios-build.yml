@@ -7,13 +7,14 @@ on:
 
 jobs:
   build:
+    # Use latest Mac to support Capacitor 8 / Xcode 16 tools
     runs-on: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Capacitor 7+ requires Node 22
+      # Capacitor 7/8 requires Node 22
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -28,7 +29,7 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
-      # Retry loop to prevent "Request timed out" errors
+      # Retry loop to prevent network timeouts
       - name: Resolve Dependencies (Retry)
         run: |
           cd ios/App
@@ -43,21 +44,24 @@ jobs:
           done
 
       - name: Build for iOS Simulator
-        # TARGET: iPhone 16 Pro
-        # VERSION: Compatible with iOS 18.2 (Matches Appetize)
+        # TARGET: iPhone 15 Pro
+        # COMPATIBILITY: iOS 17.0 (The "Safe Harbor" version)
         run: |
           cd ios/App
           xcodebuild -scheme App \
             -project App.xcodeproj \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
             -derivedDataPath build \
+            IPHONEOS_DEPLOYMENT_TARGET=17.0
 
       - name: Zip the Build
+        # -r: recursive
+        # -X: Exclude hidden macOS files (__MACOSX) that confuse Appetize
         run: |
           cd ios/App/build/Build/Products/Debug-iphonesimulator
-          zip -r ios_simulator_build.zip App.app
+          zip -r -X ios_simulator_build.zip App.app
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
