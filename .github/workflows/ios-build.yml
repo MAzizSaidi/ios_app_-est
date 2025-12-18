@@ -7,13 +7,14 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    # CHANGED: 'macos-14' ensures we use Xcode 15 and iOS 17 SDK
+    runs-on: macos-14
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Keep Node 22 (Required for Capacitor 7+)
+      # Keep Node 22 for Capacitor 7/8
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -28,16 +29,33 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
+      # Retry loop for dependencies
+      - name: Resolve Dependencies (Retry)
+        run: |
+          cd ios/App
+          for i in {1..3}; do
+            echo "Attempt $i to download dependencies..."
+            xcodebuild -resolvePackageDependencies \
+              -project App.xcodeproj \
+              -scheme App \
+              -configuration Debug \
+              -sdk iphonesimulator \
+              && break || sleep 15;
+          done
+
       - name: Build for iOS Simulator
-        # CHANGED: Destination is now "iPhone 16" to match your available simulators
+        # CHANGED: 
+        # 1. Target iPhone 15
+        # 2. Force Deployment Target to 17.0 (Runs on iOS 17 & 18)
         run: |
           cd ios/App
           xcodebuild -scheme App \
             -project App.xcodeproj \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
-            -derivedDataPath build
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -derivedDataPath build \
+            IPHONEOS_DEPLOYMENT_TARGET=17.0
 
       - name: Zip the Build
         run: |
