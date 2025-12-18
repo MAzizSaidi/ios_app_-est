@@ -27,6 +27,7 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
+      # Retry loop to prevent "Request timed out" errors
       - name: Resolve Dependencies (Retry)
         run: |
           cd ios/App
@@ -41,46 +42,33 @@ jobs:
           done
 
       - name: Build for iOS Simulator
-        # Targeting iPhone SE (3rd Gen) / iOS 16 compatible
+        # TARGET: iPhone 16 Pro
+        # VERSION: 18.2 (Compatible with Appetize)
         run: |
           cd ios/App
           xcodebuild -scheme App \
             -project App.xcodeproj \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone SE (3rd generation)' \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
             -derivedDataPath build \
-            IPHONEOS_DEPLOYMENT_TARGET=16.0
+            IPHONEOS_DEPLOYMENT_TARGET=18.2
 
-      # ---------------------------------------------------------
-      # NEW STRATEGY: Find, Move, Zip with Symlinks
-      # ---------------------------------------------------------
-      - name: Prepare and Zip Application
+      - name: Zip the Build
+        # -y: Preserves symlinks (CRITICAL for fixing "No .app found")
+        # -X: Removes hidden macOS files
         run: |
-          # 1. Find the .app folder anywhere in the build directory
-          APP_PATH=$(find ios/App/build -name "*.app" -type d | head -n 1)
-          
-          if [ -z "$APP_PATH" ]; then
-            echo "ERROR: Could not find .app folder!"
-            exit 1
-          fi
-          
-          echo "Found App at: $APP_PATH"
-          
-          # 2. Move it to a clean staging directory in the root
-          mkdir -p staging
-          cp -R "$APP_PATH" staging/App.app
-          
-          # 3. Zip it using -y to preserve symbolic links (CRITICAL for iOS apps)
-          cd staging
-          zip -r -y ../ios_simulator_build.zip App.app
+          cd ios/App/build/Build/Products/Debug-iphonesimulator
+          zip -r -y -X ios_simulator_build.zip App.app
 
+      # NEW STEP: This prints the zip content to the GitHub logs
       - name: Debug Zip Structure
-        # This will print the zip contents to the GitHub logs so we can verify it
-        run: unzip -l ios_simulator_build.zip | head -n 20
+        run: |
+          cd ios/App/build/Build/Products/Debug-iphonesimulator
+          unzip -l ios_simulator_build.zip | head -n 20
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-simulator-build
-          path: ios_simulator_build.zip
+          path: ios/App/build/Build/Products/Debug-iphonesimulator/ios_simulator_build.zip
