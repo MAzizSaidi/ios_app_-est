@@ -1,0 +1,52 @@
+name: Build iOS Simulator App
+
+on:
+  push:
+    branches:
+      - main 
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.1' 
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Web Assets
+        run: npm run build 
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      - name: Build for iOS Simulator
+        # This command builds the app specifically for the Simulator architecture (x86_64/arm64)
+        # It creates an .app bundle, not an .ipa
+        run: |
+          cd ios/App
+          xcodebuild -scheme App \
+            -workspace App.xcworkspace \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -derivedDataPath build
+
+      - name: Zip the Build
+        # Appetize requires the .app folder to be zipped
+        run: |
+          cd ios/App/build/Build/Products/Debug-iphonesimulator
+          zip -r ios_simulator_build.zip App.app
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-build
+          path: ios/App/build/Build/Products/Debug-iphonesimulator/ios_simulator_build.zip
