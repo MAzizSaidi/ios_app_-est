@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22' 
+          node-version: '24.11.1' 
 
       - name: Install Dependencies
         run: npm install
@@ -41,7 +41,7 @@ jobs:
           done
 
       - name: Build for iOS Simulator
-        # Targeting iPhone SE (3rd Gen) with iOS 16 compatibility
+        # Targeting iPhone SE (3rd Gen) / iOS 16 compatible
         run: |
           cd ios/App
           xcodebuild -scheme App \
@@ -52,20 +52,35 @@ jobs:
             -derivedDataPath build \
             IPHONEOS_DEPLOYMENT_TARGET=16.0
 
-      # NEW: Debug step to prove the .app exists before zipping
-      - name: Verify Build Output
+      # ---------------------------------------------------------
+      # NEW STRATEGY: Find, Move, Zip with Symlinks
+      # ---------------------------------------------------------
+      - name: Prepare and Zip Application
         run: |
-          echo "Listing build directory..."
-          ls -R ios/App/build/Build/Products/Debug-iphonesimulator
+          # 1. Find the .app folder anywhere in the build directory
+          APP_PATH=$(find ios/App/build -name "*.app" -type d | head -n 1)
+          
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: Could not find .app folder!"
+            exit 1
+          fi
+          
+          echo "Found App at: $APP_PATH"
+          
+          # 2. Move it to a clean staging directory in the root
+          mkdir -p staging
+          cp -R "$APP_PATH" staging/App.app
+          
+          # 3. Zip it using -y to preserve symbolic links (CRITICAL for iOS apps)
+          cd staging
+          zip -r -y ../ios_simulator_build.zip App.app
 
-      - name: Zip the Build (Correctly)
-        # Using 'ditto' creates a clean zip with the App.app folder structure intact
-        run: |
-          cd ios/App/build/Build/Products/Debug-iphonesimulator
-          ditto -c -k --keepParent App.app ios_simulator_build.zip
+      - name: Debug Zip Structure
+        # This will print the zip contents to the GitHub logs so we can verify it
+        run: unzip -l ios_simulator_build.zip | head -n 20
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-simulator-build
-          path: ios/App/build/Build/Products/Debug-iphonesimulator/ios_simulator_build.zip
+          path: ios_simulator_build.zip
