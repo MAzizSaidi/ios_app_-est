@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Keep Node 22 for Capacitor 7/8
+      # Capacitor 7+ requires Node 22
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -28,7 +28,7 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
-      # Retry loop for dependencies
+      # Retry loop to prevent "Request timed out" errors
       - name: Resolve Dependencies (Retry)
         run: |
           cd ios/App
@@ -43,18 +43,17 @@ jobs:
           done
 
       - name: Build for iOS Simulator
-        # CHANGED: 
-        # 1. Target iPhone 15
-        # 2. Force Deployment Target to 17.0 (Runs on iOS 17 & 18)
+        # TARGET: iPhone 16 Pro
+        # VERSION: Compatible with iOS 18.2 (Matches Appetize)
         run: |
           cd ios/App
           xcodebuild -scheme App \
             -project App.xcodeproj \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
             -derivedDataPath build \
-            IPHONEOS_DEPLOYMENT_TARGET=17.0
+            IPHONEOS_DEPLOYMENT_TARGET=18.2
 
       - name: Zip the Build
         run: |
