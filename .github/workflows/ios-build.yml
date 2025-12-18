@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24.11.1' 
+          node-version: '20' # Recommend using LTS (20) unless 24 is strictly required
 
       - name: Install Dependencies
         run: npm install
@@ -28,19 +28,17 @@ jobs:
         run: npx cap sync ios
 
       - name: Build for iOS Simulator
-        # This command builds the app specifically for the Simulator architecture (x86_64/arm64)
-        # It creates an .app bundle, not an .ipa
+        # CHANGED: Using -project instead of -workspace
         run: |
           cd ios/App
           xcodebuild -scheme App \
-            -workspace App.xcworkspace \
+            -project App.xcodeproj \
             -configuration Debug \
             -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,name=iPhone 15' \
             -derivedDataPath build
 
       - name: Zip the Build
-        # Appetize requires the .app folder to be zipped
         run: |
           cd ios/App/build/Build/Products/Debug-iphonesimulator
           zip -r ios_simulator_build.zip App.app
