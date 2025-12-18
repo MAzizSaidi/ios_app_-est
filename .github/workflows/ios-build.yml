@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Recommend using LTS (20) unless 24 is strictly required
+          node-version: '24.11.1' # Recommend using LTS (20) unless 24 is strictly required
 
       - name: Install Dependencies
         run: npm install
