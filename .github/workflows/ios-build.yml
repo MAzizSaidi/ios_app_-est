@@ -50,9 +50,9 @@ jobs:
             -project App.xcodeproj \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -destination 'platform=iOS Simulator,name=iPhone 14 Pro' \
             -derivedDataPath build \
-            IPHONEOS_DEPLOYMENT_TARGET=18.2
+            IPHONEOS_DEPLOYMENT_TARGET=16
 
       - name: Zip the Build
         # -y: Preserves symlinks (CRITICAL for fixing "No .app found")
