@@ -7,8 +7,7 @@ on:
 
 jobs:
   build:
-    # CHANGED: 'macos-14' ensures we use Xcode 15 and iOS 17 SDK
-    runs-on: macos-14
+    runs-on: macos-latest
 
     steps:
       - name: Checkout repository
