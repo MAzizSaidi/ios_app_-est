@@ -7,7 +7,6 @@ on:
 
 jobs:
   build:
-    # Use latest Mac to support Capacitor 8 / Xcode 16 tools
     runs-on: macos-latest
 
     steps:
@@ -29,7 +28,6 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
-      # Retry loop to prevent network timeouts
       - name: Resolve Dependencies (Retry)
         run: |
           cd ios/App
@@ -44,21 +42,20 @@ jobs:
           done
 
       - name: Build for iOS Simulator
-        # TARGET: iPhone 15 Pro
-        # COMPATIBILITY: iOS 17.0 (The "Safe Harbor" version)
+        # TARGET: iPhone SE (3rd generation) [Exists on GitHub Runner]
+        # COMPATIBILITY: iOS 16.0 [Works on iPhone 8 and newer]
         run: |
           cd ios/App
           xcodebuild -scheme App \
             -project App.xcodeproj \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+            -destination 'platform=iOS Simulator,name=iPhone SE (3rd generation)' \
             -derivedDataPath build \
-            IPHONEOS_DEPLOYMENT_TARGET=17.0
+            IPHONEOS_DEPLOYMENT_TARGET=16.0
 
       - name: Zip the Build
-        # -r: recursive
-        # -X: Exclude hidden macOS files (__MACOSX) that confuse Appetize
+        # -X: Removes hidden mac files to fix "No app to install" errors
         run: |
           cd ios/App/build/Build/Products/Debug-iphonesimulator
           zip -r -X ios_simulator_build.zip App.app
