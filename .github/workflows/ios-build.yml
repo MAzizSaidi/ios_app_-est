@@ -13,7 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Capacitor 7/8 requires Node 22
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -42,8 +41,7 @@ jobs:
           done
 
       - name: Build for iOS Simulator
-        # TARGET: iPhone SE (3rd generation) [Exists on GitHub Runner]
-        # COMPATIBILITY: iOS 16.0 [Works on iPhone 8 and newer]
+        # Targeting iPhone SE (3rd Gen) with iOS 16 compatibility
         run: |
           cd ios/App
           xcodebuild -scheme App \
@@ -54,11 +52,17 @@ jobs:
             -derivedDataPath build \
             IPHONEOS_DEPLOYMENT_TARGET=16.0
 
-      - name: Zip the Build
-        # -X: Removes hidden mac files to fix "No app to install" errors
+      # NEW: Debug step to prove the .app exists before zipping
+      - name: Verify Build Output
+        run: |
+          echo "Listing build directory..."
+          ls -R ios/App/build/Build/Products/Debug-iphonesimulator
+
+      - name: Zip the Build (Correctly)
+        # Using 'ditto' creates a clean zip with the App.app folder structure intact
         run: |
           cd ios/App/build/Build/Products/Debug-iphonesimulator
-          zip -r -X ios_simulator_build.zip App.app
+          ditto -c -k --keepParent App.app ios_simulator_build.zip
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
