@@ -13,10 +13,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Keep Node 22 (Required for Capacitor 7+)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24.11.1' 
+          node-version: '22' 
 
       - name: Install Dependencies
         run: npm install
@@ -28,14 +29,14 @@ jobs:
         run: npx cap sync ios
 
       - name: Build for iOS Simulator
-        # CHANGED: Using -project instead of -workspace
+        # CHANGED: Destination is now "iPhone 16" to match your available simulators
         run: |
           cd ios/App
           xcodebuild -scheme App \
             -project App.xcodeproj \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 13' \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
             -derivedDataPath build
 
       - name: Zip the Build
