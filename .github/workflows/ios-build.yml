@@ -13,6 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Using the Node version you prefer
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -43,25 +44,24 @@ jobs:
 
       - name: Build for iOS Simulator
         # TARGET: iPhone 16 Pro
-        # VERSION: 18.2 (Compatible with Appetize)
+        # COMPATIBILITY: Force iOS 18.2 so it matches Appetize
         run: |
           cd ios/App
           xcodebuild -scheme App \
             -project App.xcodeproj \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 14 Pro' \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
             -derivedDataPath build \
-            IPHONEOS_DEPLOYMENT_TARGET=16
+            IPHONEOS_DEPLOYMENT_TARGET=18.2
 
       - name: Zip the Build
-        # -y: Preserves symlinks (CRITICAL for fixing "No .app found")
-        # -X: Removes hidden macOS files
+        # -y: Preserves symlinks (Vital for .app bundles)
+        # -X: Removes hidden macOS files (Fixes "No app found")
         run: |
           cd ios/App/build/Build/Products/Debug-iphonesimulator
           zip -r -y -X ios_simulator_build.zip App.app
 
-      # NEW STEP: This prints the zip content to the GitHub logs
       - name: Debug Zip Structure
         run: |
           cd ios/App/build/Build/Products/Debug-iphonesimulator
